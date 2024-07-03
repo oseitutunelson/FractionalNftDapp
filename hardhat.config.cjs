@@ -1,5 +1,6 @@
 require('@nomiclabs/hardhat-ethers');
 require('@nomicfoundation/hardhat-toolbox');
+require('hardhat-deploy');
 
 
 PRIVATE_KEY = '681f8d7f47808db4623ecd36e8a14f947c1aa278cd217e61b3faff50c50e2215'

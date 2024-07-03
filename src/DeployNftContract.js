@@ -1,33 +1,38 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
-import nftArtifact from './contractData/contractData.json';
+import nftArtifact from './contracts/Nft.sol/Nft.json';
 
-const DeployContract = () => {
+const DeployContract = ({ setContractAddress }) => {
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
-  const [contractAddress, setContractAddress] = useState('');
 
   const deployContract = async () => {
-    if (!window.ethereum) {
-      alert("MetaMask is not installed!");
-      return;
-    }
-
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = provider.getSigner();
-
-    const Nft = new ethers.ContractFactory(nftArtifact.abi, nftArtifact.bytecode, signer);
-
     try {
+      if (!window.ethereum) {
+        alert("MetaMask is not installed!");
+        return;
+      }
+
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      console.log('Preparing contract factory with ABI and bytecode');
+      const Nft = new ethers.ContractFactory(nftArtifact.abi, nftArtifact.bytecode, signer);
+
+      console.log('Deploying contract with parameters:', name, symbol, await signer.getAddress());
       const nft = await Nft.deploy(name, symbol, await signer.getAddress());
-      await nft.deployTransaction.wait();  // Ensure the transaction is mined
+
+      console.log('Waiting for contract deployment to be mined...');
+      await nft.waitForDeployment();
+
+      console.log('Contract deployed successfully:', nft);
       setContractAddress(nft.address);
-      alert(`Contract deployed at: ${nft.address}`);
+      alert(`Contract deployed at: ${await nft.getAddress()}`);
     } catch (error) {
       console.error("Error deploying contract:", error);
-      alert("Error deploying contract");
+      alert(`Error deploying contract: ${error.message}`);
     }
   };
 
@@ -47,7 +52,6 @@ const DeployContract = () => {
         onChange={(e) => setSymbol(e.target.value)}
       />
       <button onClick={deployContract}>Deploy Contract</button>
-      {contractAddress && <p>Contract Address: {contractAddress}</p>}
     </div>
   );
 };
