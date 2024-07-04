@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
-import nftArtifact from './contracts/Nft.sol/Nft.json';
+import nftArtifact from '../contracts/Nft.sol/Nft.json';
+import '../styles/deploy.css';
 
-const DeployContract = () => {
+const DeployContract = ({setContractAddress}) => {
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('');
-  const [contractAddress,setContractAddress] = useState('')
+  const [contractAddress,setContractAddress1] = useState('');
 
   const deployContract = async () => {
     try {
@@ -30,6 +31,7 @@ const DeployContract = () => {
 
       console.log('Contract deployed successfully:', nft);
       setContractAddress(`${await nft.getAddress()}`);
+      setContractAddress1(`${await nft.getAddress()}`)
       alert(`Contract deployed at: ${await nft.getAddress()}`);
     } catch (error) {
       console.error("Error deploying contract:", error);
