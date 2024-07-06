@@ -4,9 +4,12 @@ import MintNft from './components/InteractNftContract';
 import './App.css';
 import { ethers } from 'ethers';
 import truncateEthAddress from 'truncate-eth-address';
+import DeployFractionalNft from './components/DeployFractionalNFT';
+import FractionalInteract from './components/interactFractionalContract';
 
 function App() {
     const [contractAddress, setContractAddress] = useState('');
+    const [fractionAddress, setFractionAddress] = useState('');
     const [wallet, setWallet] = useState('');
  
     const connect = async() => {
@@ -47,8 +50,12 @@ function App() {
             <div className='app_contract'>
             <DeployNftContract setContractAddress={setContractAddress} />
             {contractAddress && <MintNft contractAddress={contractAddress} />}
+
             </div>
-            
+            <div className='token_contract'>
+              <DeployFractionalNft setFractionAddress={setFractionAddress}/>
+              {fractionAddress && <FractionalInteract fractionAddress={fractionAddress}/>}
+            </div>
         </div>
     );
 }

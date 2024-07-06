@@ -69,7 +69,7 @@ const MintNft = ({ contractAddress }) => {
       <h3>Mint nft</h3>
       <input
         type="text"
-        placeholder="Token ID"
+        placeholder="Fractional Contract Address"
         value={tokenId}
         onChange={(e) => setTokenId(e.target.value)}
       />
