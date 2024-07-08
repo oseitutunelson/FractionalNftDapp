@@ -1,6 +1,7 @@
 import React  ,{useState} from  'react';
 import nftArtifact from '../contracts/Nft.sol/FractionalNft.json';
 import { ethers } from 'ethers';
+import { Link } from 'react-router-dom';
 
 export default function DeployFractionalNft({setFractionAddress}){
     const [contractAddress,setContractAddress] = useState('');
@@ -40,7 +41,11 @@ export default function DeployFractionalNft({setFractionAddress}){
             <h2>Deploy Fractional Nft Contract</h2>
             <p>This is a fractional nft contract that your nft's are transferred into and divided into shares.</p>
             <button onClick={deployContract}>Deploy Contract</button>
-            {contractAddress && <p>Deployed to : {contractAddress}</p>}
+            {contractAddress && <div>
+              <p>Deployed to : {contractAddress}</p>
+              <Link href=""><button>My Nfts</button></Link>
+            </div>
+            }
         </div>
       )
 }

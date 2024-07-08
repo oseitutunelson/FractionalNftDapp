@@ -80,7 +80,6 @@ const MintNft = ({ contractAddress }) => {
         onChange={(e) => setUri(e.target.value)}
       />
       <button onClick={mintNft}>Mint NFT</button>
-      {mintNft ?  <p>Minted with token ID : {tokenId}</p> : null}
       </div>
       <div className='nft_setApprove'>
         <h3>Set Approve For fractional nft Contract</h3>
