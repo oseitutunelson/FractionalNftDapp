@@ -1,5 +1,5 @@
 import React  ,{useState} from  'react';
-import nftArtifact from '../contracts/Nft.sol/FractionalNft.json';
+import nftArtifact from '../contracts/fractionalNft.sol/FractionalNft.json';
 import { ethers } from 'ethers';
 import { Link } from 'react-router-dom';
 

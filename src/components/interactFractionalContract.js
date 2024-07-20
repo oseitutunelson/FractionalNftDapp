@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
-import nftArtifact from '../contracts/Nft.sol/FractionalNft.json';
+import nftArtifact from '../contracts/fractionalNft.sol/FractionalNft.json';
 
 const FractionalInteract = ({fractionAddress}) =>{
     const [tokenId,setTokenId] = useState('');

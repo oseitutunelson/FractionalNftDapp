@@ -19,6 +19,7 @@ const DeployContract = ({setContractAddress}) => {
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const address = await signer.getAddress();
 
       console.log('Preparing contract factory with ABI and bytecode');
       const Nft = new ethers.ContractFactory(nftArtifact.abi, nftArtifact.bytecode, signer);
@@ -29,9 +30,12 @@ const DeployContract = ({setContractAddress}) => {
       console.log('Waiting for contract deployment to be mined...');
       await nft.waitForDeployment();
 
+      const contractAddress = await nft.getAddress();
+
       console.log('Contract deployed successfully:', nft);
-      setContractAddress(`${await nft.getAddress()}`);
-      setContractAddress1(`${await nft.getAddress()}`)
+      localStorage.setItem('nftContractAddress', contractAddress);
+      setContractAddress(contractAddress);
+      setContractAddress1(contractAddress);
       alert(`Contract deployed at: ${await nft.getAddress()}`);
     } catch (error) {
       console.error("Error deploying contract:", error);

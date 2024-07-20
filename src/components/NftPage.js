@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import nftArtifact from '../contracts/Nft.sol/Nft.json';
+import axios from 'axios';
 
-const FetchNfts = ({ contractAddress }) => {
+const NftStats = ({ contractAddress }) => {
   const [nfts, setNfts] = useState([]);
 
   useEffect(() => {
@@ -10,6 +11,10 @@ const FetchNfts = ({ contractAddress }) => {
   }, []);
 
   const fetchNfts = async () => {
+    const storedNfts = JSON.parse(localStorage.getItem('nfts')) || [];
+    setNfts(storedNfts);
+
+
     if (!window.ethereum) {
       alert("MetaMask is not installed!");
       return;
@@ -24,26 +29,30 @@ const FetchNfts = ({ contractAddress }) => {
     const nftContract = new ethers.Contract(contractAddress, nftArtifact.abi, provider);
 
     try {
-      // Assuming you have a way to get the total number of tokens owned by the user
       const balance = await nftContract.balanceOf(userAddress);
-
       const userNfts = [];
+
       for (let i = 0; i < balance; i++) {
         const tokenId = await nftContract.tokenOfOwnerByIndex(userAddress, i);
         const tokenURI = await nftContract.tokenURI(tokenId);
-        userNfts.push({ tokenId: tokenId.toString(), tokenURI });
+
+        // Fetch metadata from IPFS
+        const response = await axios.get(tokenURI);
+        const metadata = response.data;
+
+        userNfts.push({ tokenId: tokenId.toString(), metadata });
       }
 
       setNfts(userNfts);
     } catch (error) {
       console.error("Error fetching NFTs:", error);
-      alert(`Error fetching NFTs: ${error.message}`);
+      alert(`Error fetching NFTs: ${error.message}`)
     }
   };
 
   return (
     <div>
-      <h2>Your NFTs</h2>
+       <h2>Your NFTs</h2>
       {nfts.length === 0 ? (
         <p>No NFTs found</p>
       ) : (
@@ -51,9 +60,9 @@ const FetchNfts = ({ contractAddress }) => {
           {nfts.map((nft) => (
             <div key={nft.tokenId}>
               <p>Token ID: {nft.tokenId}</p>
-              <p>Token URI: {nft.tokenURI}</p>
-              {/* Assuming the tokenURI is a link to an image */}
-              <img src={nft.tokenURI} alt={`NFT ${nft.tokenId}`} width="200" />
+              <p>Name: {nft.metadata.name}</p>
+              <p>Description: {nft.metadata.description}</p>
+              <img src={nft.metadata.image} alt={`NFT ${nft.tokenId}`} width="200" />
             </div>
           ))}
         </div>
@@ -62,4 +71,4 @@ const FetchNfts = ({ contractAddress }) => {
   );
 };
 
-export default FetchNfts;
+export default NftStats;

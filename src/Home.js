@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import DeployNftContract from './components/DeployNftContract';
 import MintNft from './components/InteractNftContract';
 import './App.css';
@@ -6,13 +6,22 @@ import { ethers } from 'ethers';
 import truncateEthAddress from 'truncate-eth-address';
 import DeployFractionalNft from './components/DeployFractionalNFT';
 import FractionalInteract from './components/interactFractionalContract';
-import FetchNfts from './components/NftPage';
+import NftStats from './components/NftPage';
+import { Link } from 'react-router-dom';
 
 function Home() {
     const [contractAddress, setContractAddress] = useState('');
     const [fractionAddress, setFractionAddress] = useState('');
     const [wallet, setWallet] = useState('');
  
+    useEffect(() => {
+      const savedContractAddress = localStorage.getItem('nftContractAddress');
+      if (savedContractAddress) {
+        setContractAddress(savedContractAddress);
+      }
+    }, []);
+
+
     const connect = async() => {
         try {
             if (!window.ethereum) {
@@ -50,10 +59,11 @@ function Home() {
             </div>
             <div className='app_contract'>
             <DeployNftContract setContractAddress={setContractAddress} />
+            
             {contractAddress &&
             <>
             <MintNft contractAddress={contractAddress} />
-            <FetchNfts contractAddress={contractAddress}/>
+            <NftStats contractAddress={contractAddress}/>
             </>
             }
 

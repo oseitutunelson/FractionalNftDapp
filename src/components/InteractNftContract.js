@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 import nftArtifact from '../contracts/Nft.sol/Nft.json';
-
+//import FetchNfts from './NftPage';
+import NftStats from './NftPage';
+import axios from 'axios';
 
 const MintNft = ({ contractAddress }) => {
   const [tokenId, setTokenId] = useState('');
@@ -9,6 +11,25 @@ const MintNft = ({ contractAddress }) => {
   const [fractionalContract,setFractionalContract] = useState('');
   let isApprove = true;
   const [isApproved, setIsApproved] = useState(isApprove);
+  const [metadata, setMetadata] = useState({ name: '', description: '', image: '' });
+  const [error, setError] = useState('');
+
+  //upload metadata
+  const uploadToIPFS = async (metadata) => {
+    const url = `https://api.pinata.cloud/pinning/pinJSONToIPFS`;
+    try {
+      const response = await axios.post(url, metadata, {
+        headers: {
+          pinata_api_key: '4a0e0d15e482e61e9279',
+          pinata_secret_api_key: '3ced20157371fd8135da08d2e89c0bb19e8f3e1901c71e63622cde478f464caa',
+        },
+      });
+      return response.data.IpfsHash;
+    } catch (error) {
+      console.error("Error uploading to IPFS:", error);
+      throw new Error('IPFS upload failed');
+    }
+  };
   //mint nft
   const mintNft = async () => {
     if (!window.ethereum) {
@@ -26,12 +47,21 @@ const MintNft = ({ contractAddress }) => {
     const nftContract = new ethers.Contract(contractAddress, nftArtifact.abi, signer);
 
     try {
-      const tx = await nftContract.mint(address, tokenId, uri);
+      const cid = await uploadToIPFS(metadata);
+      const tokenURI = `https://gateway.pinata.cloud/ipfs/${cid}`;
+      console.log('Token URI:', tokenURI);
+      const tx = await nftContract.mint(address, tokenId, tokenURI);
       await tx.wait();
-      alert(`NFT minted with token ID: ${tokenId}`);
+
+      // Save the NFT data in local storage
+      const storedNfts = JSON.parse(localStorage.getItem('nfts')) || [];
+      storedNfts.push({ tokenId, tokenURI });
+      localStorage.setItem('nfts', JSON.stringify(storedNfts));
+
+      alert(`NFT minted! Token ID: ${tokenId}`);
     } catch (error) {
       console.error("Error minting NFT:", error);
-      alert("Error minting NFT");
+      setError(`Error minting NFT: ${error.message}`)
     }
   };
 
@@ -57,7 +87,7 @@ const MintNft = ({ contractAddress }) => {
       alert('Approved contract');
     }catch(error){
       console.log('Error Approving Contract',error);
-      alert('Error Approving Contract');
+      alert('Error Approving Contract')
     }
   }
 
@@ -66,20 +96,33 @@ const MintNft = ({ contractAddress }) => {
       <h2>Interact with Nft</h2>
      <div className='nft_interact'>
       <div className='nft_mint'>
-      <h3>Mint nft</h3>
+      <h2>Mint NFT</h2>
       <input
         type="text"
-        placeholder="Token Id"
+        placeholder="Token ID"
         value={tokenId}
         onChange={(e) => setTokenId(e.target.value)}
       />
       <input
         type="text"
-        placeholder="Token URI"
-        value={uri}
-        onChange={(e) => setUri(e.target.value)}
+        placeholder="Name"
+        value={metadata.name}
+        onChange={(e) => setMetadata({ ...metadata, name: e.target.value })}
       />
-      <button onClick={mintNft}>Mint NFT</button>
+      <input
+        type="text"
+        placeholder="Description"
+        value={metadata.description}
+        onChange={(e) => setMetadata({ ...metadata, description: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Image URL"
+        value={metadata.image}
+        onChange={(e) => setMetadata({ ...metadata, image: e.target.value })}
+      />
+      <button onClick={mintNft}>Mint</button>
+     
       </div>
       <div className='nft_setApprove'>
         <h3>Set Approve For fractional nft Contract</h3>

@@ -34,6 +34,9 @@
   margin: 2rem 0;
   
 }
+.app_deploy{
+  display: none;
+}
 
 @media screen and (min-width:800px) {
   .app_content_left{
