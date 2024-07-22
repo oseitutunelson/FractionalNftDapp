@@ -30,6 +30,7 @@ const NftStats = ({ contractAddress }) => {
 
     try {
       const balance = await nftContract.balanceOf(userAddress);
+      console.log(balance);
       const userNfts = [];
 
       for (let i = 0; i < balance; i++) {
@@ -38,12 +39,13 @@ const NftStats = ({ contractAddress }) => {
 
         // Fetch metadata from IPFS
         const response = await axios.get(tokenURI);
+        console.log(response.data);
         const metadata = response.data;
 
         userNfts.push({ tokenId: tokenId.toString(), metadata });
       }
 
-      setNfts(userNfts);
+     setNfts(userNfts);
     } catch (error) {
       console.error("Error fetching NFTs:", error);
       alert(`Error fetching NFTs: ${error.message}`)
@@ -62,7 +64,7 @@ const NftStats = ({ contractAddress }) => {
               <p>Token ID: {nft.tokenId}</p>
               <p>Name: {nft.metadata.name}</p>
               <p>Description: {nft.metadata.description}</p>
-              <img src={nft.metadata.image} alt={`NFT ${nft.tokenId}`} width="200" />
+              <img src={`https://emerald-fancy-gerbil-824.mypinata.cloud/ipfs/${nft.metadata.image}`} alt={`NFT ${nft.tokenId}`} width="200" />
             </div>
           ))}
         </div>

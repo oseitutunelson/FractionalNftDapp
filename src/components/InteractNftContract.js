@@ -55,7 +55,7 @@ const MintNft = ({ contractAddress }) => {
 
       // Save the NFT data in local storage
       const storedNfts = JSON.parse(localStorage.getItem('nfts')) || [];
-      storedNfts.push({ tokenId, tokenURI });
+      storedNfts.push({ metadata,tokenId, tokenURI });
       localStorage.setItem('nfts', JSON.stringify(storedNfts));
 
       alert(`NFT minted! Token ID: ${tokenId}`);
