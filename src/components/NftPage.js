@@ -5,6 +5,7 @@ import axios from 'axios';
 
 const NftStats = ({ contractAddress }) => {
   const [nfts, setNfts] = useState([]);
+  const [tokens, setTokens] = useState([]);
 
   useEffect(() => {
     fetchNfts();
@@ -13,6 +14,9 @@ const NftStats = ({ contractAddress }) => {
   const fetchNfts = async () => {
     const storedNfts = JSON.parse(localStorage.getItem('nfts')) || [];
     setNfts(storedNfts);
+
+    const storedTokens = JSON.parse(localStorage.getItem('tokenData')) || [];
+    setTokens(storedTokens);
 
 
     if (!window.ethereum) {
@@ -48,7 +52,7 @@ const NftStats = ({ contractAddress }) => {
      setNfts(userNfts);
     } catch (error) {
       console.error("Error fetching NFTs:", error);
-      alert(`Error fetching NFTs: ${error.message}`)
+      //alert(`Error fetching NFTs: ${error.message}`)
     }
   };
 
@@ -59,13 +63,18 @@ const NftStats = ({ contractAddress }) => {
         <p>No NFTs found</p>
       ) : (
         <div>
-          {nfts.map((nft) => (
-            <div key={nft.tokenId}>
+          {tokens.map((token) => (
+            nfts.map((nft)=>(
+              <div key={nft.tokenId}>
               <p>Token ID: {nft.tokenId}</p>
               <p>Name: {nft.metadata.name}</p>
               <p>Description: {nft.metadata.description}</p>
               <img src={`https://emerald-fancy-gerbil-824.mypinata.cloud/ipfs/${nft.metadata.image}`} alt={`NFT ${nft.tokenId}`} width="200" />
+              <p>Token Shares : {token.tokenShares}</p>
+              <p>Token Price : {token.tokenPrice}</p>
             </div>
+            ))
+            
           ))}
         </div>
       )}

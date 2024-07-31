@@ -27,6 +27,7 @@ export default function DeployFractionalNft({setFractionAddress}){
           await token.waitForDeployment();
     
           console.log('Contract deployed successfully:', token);
+          localStorage.setItem('fractionContract',await token.getAddress())
          setContractAddress(`${await token.getAddress()}`);
          setFractionAddress(`${await token.getAddress()}`)
           alert(`Contract deployed at: ${await token.getAddress()}`);

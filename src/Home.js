@@ -19,6 +19,10 @@ function Home() {
       if (savedContractAddress) {
         setContractAddress(savedContractAddress);
       }
+      const savedFractionAddress = localStorage.getItem('fractionContract');
+      if(savedFractionAddress){
+        setFractionAddress(savedFractionAddress);
+      }
     }, []);
 
 
@@ -63,7 +67,7 @@ function Home() {
             {contractAddress &&
             <>
             <MintNft contractAddress={contractAddress} />
-            <NftStats contractAddress={contractAddress}/>
+            <Link href={`/mynfts/${contractAddress}`}>My Nfts</Link>
             </>
             }
 
