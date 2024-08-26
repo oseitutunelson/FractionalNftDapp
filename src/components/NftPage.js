@@ -59,23 +59,25 @@ const NftStats = ({ contractAddress }) => {
   return (
     <div>
        <h2>Your NFTs</h2>
+       <br/>
       {nfts.length === 0 ? (
         <p>No NFTs found</p>
       ) : (
         <div>
-          {tokens.map((token) => (
-            nfts.map((nft)=>(
+          {nfts.map((nft) => (
+            
               <div key={nft.tokenId}>
-              <p>Token ID: {nft.tokenId}</p>
+              <p><b>Token ID: {nft.tokenId}</b></p>
               <p>Name: {nft.metadata.name}</p>
               <p>Description: {nft.metadata.description}</p>
               <img src={`https://emerald-fancy-gerbil-824.mypinata.cloud/ipfs/${nft.metadata.image}`} alt={`NFT ${nft.tokenId}`} width="200" />
-              <p>Token Shares : {token.tokenShares}</p>
-              <p>Token Price : {token.tokenPrice}</p>
+              
+              <br/>
+              <br/>
             </div>
-            ))
+            )
             
-          ))}
+          )}
         </div>
       )}
     </div>

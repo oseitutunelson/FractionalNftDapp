@@ -44,7 +44,7 @@ export default function DeployFractionalNft({setFractionAddress}){
             <button onClick={deployContract}>Deploy Contract</button>
             {contractAddress && <div>
               <p>Deployed to : {contractAddress}</p>
-              <Link href=""><button>My Nfts</button></Link>
+              
             </div>
             }
         </div>
