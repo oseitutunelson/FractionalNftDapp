@@ -4,16 +4,25 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import {PriceConvertor} from './PriceConvertor.sol';
+import {AggregatorV3Interface} from './AggregatorV3Interface.sol';
 
 contract FractionalNft is ERC20, Ownable, ERC721Holder {
+
+    using PriceConvertor for uint256;
     //nft structure
     struct NFTInfo {
         uint16 tokenId;
-        uint256 shares;
+        uint256 shares; 
         bool forSale;
         uint256 salePrice;
         bool redeemable;
     }
+
+    //pricefeed
+    AggregatorV3Interface private s_priceFeed;
+
+    mapping(uint256 => uint256) public tokenIdToPrice;
     
     //keep track of a collection's nft and its data
     mapping(address => mapping(uint16 => NFTInfo)) public nftCollections;
@@ -25,8 +34,9 @@ contract FractionalNft is ERC20, Ownable, ERC721Holder {
     event Redeemed(address collection, uint16 tokenId, address redeemer, uint256 amount);
     event PurchasedShare(address collection,uint16 tokenId, address buyer,uint256 shareAmount);
 
-    constructor(address initialOwner) ERC20("Angle Token", "ANT")  Ownable(initialOwner) {
+    constructor(address initialOwner,address priceFeed) ERC20("Angle Token", "ANT")  Ownable(initialOwner) {
         initialOwner = msg.sender;
+        s_priceFeed = AggregatorV3Interface(priceFeed);
     }
   
    //initialize an nft collection
@@ -58,7 +68,7 @@ contract FractionalNft is ERC20, Ownable, ERC721Holder {
 
         nft.forSale = true;
         nft.salePrice = price;
-
+        tokenIdToPrice[_tokenId] += price;
         emit PutForSale(_collection, _tokenId, price);
     }
    
@@ -66,7 +76,7 @@ contract FractionalNft is ERC20, Ownable, ERC721Holder {
     function purchase(address _collection, uint16 _tokenId) external payable {
         NFTInfo storage nft = nftCollections[_collection][_tokenId];
         require(nft.forSale, "Not for sale");
-        require(msg.value >= nft.salePrice, "Not enough ether to purchase");
+        require(msg.value.getConversionRate(s_priceFeed) >= nft.salePrice, "Not enough ether to purchase");
 
         IERC721(_collection).transferFrom(address(this), msg.sender, _tokenId);
 

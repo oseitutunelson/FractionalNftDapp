@@ -12,7 +12,7 @@ async function main() {
   const initialOwner = deployer.address;
 
   // Deploy the contract with the constructor parameters
-  const token  = await Token.deploy(initialOwner);
+  const token  = await Token.deploy(initialOwner,0x694AA1769357215DE4FAC081bf1f309aDC325306);
 
   // Wait for the contract to be deployed
   await token.waitForDeployment();

@@ -1,164 +1,262 @@
 import React, { useState } from 'react';
 import { ethers } from 'ethers';
 import nftArtifact from '../contracts/fractionalNft.sol/FractionalNft.json';
-import  uploadToIPFS  from './ipfs';
+import axios from 'axios';
 
-const FractionalInteract = ({fractionAddress}) =>{
-    const [tokenId,setTokenId] = useState('');
-    const [price,setPrice] = useState('');
-    const [tokenAmount,setTokenAmount] = useState('');
-    const [nftAddress,setNftAddress] = useState('');
-    const [buyAmount,setBuyAmount] = useState('');
-    const [tokenData,setTokenData] = useState({tokenAddress : '',tokenID : '',tokenShares : '',tokenPrice : ''})
+const FractionalInteract = ({ fractionAddress }) => {
+  const [tokenId, setTokenId] = useState('');
+  const [price, setPrice] = useState('');
+  const [shares, setShares] = useState('');
+  const [nftAddress, setNftAddress] = useState('');
+  const [buyAmount, setBuyAmount] = useState('');
+  //const [tokenData, setTokenData] = useState({ tokenAddress: '', tokenID: '', tokenShares: '', tokenPrice: '' });
 
-    //initialize nft collection
-    const initializeNft = async () =>{
-        if (!window.ethereum) {
-            alert("MetaMask is not installed!");
-            return;
-          }
-      
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-      
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
-          const address =  await signer.getAddress();
-          
-          console.log('Connecting to contract at address:', fractionAddress);
-          const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+  //upload tokenData
+  const uploadToIPFS = async (tokenData) => {
+    const url = `https://api.pinata.cloud/pinning/pinJSONToIPFS`;
+    try {
+      const response = await axios.post(url, tokenData, {
+        headers: {
+          pinata_api_key: '4a0e0d15e482e61e9279',
+          pinata_secret_api_key: '3ced20157371fd8135da08d2e89c0bb19e8f3e1901c71e63622cde478f464caa',
+        },
+      });
+      return response.data.IpfsHash;
+    } catch (error) {
+      console.error("Error uploading to IPFS:", error);
+      throw new Error('IPFS upload failed');
+    }
+  };
 
-          try{
-            //const fractionData = await uploadToIPFS(tokenData);
-            const tx = await nftContract.initialize(tokenData.tokenAddress,tokenId,tokenData.tokenShares);
-            await tx.wait();
-            console.log('Nft contract initialized');
-            alert('Nft contract initialized');
-          }catch(error){
-            console.log("Error initializing contract",error);
-            alert("Error initializing contract",error);
-          }
+  // Validate NFT before purchase using nftCollections function
+  const validateNft = async () => {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed!');
+      return false;
     }
 
-    //put nft for sale
-    const putNftForSale = async () =>{
-        if (!window.ethereum) {
-            alert("MetaMask is not installed!");
-            return;
-          }
-      
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-      
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
-          const address =  await signer.getAddress();
-          
-          console.log('Connecting to contract at address:', fractionAddress);
-          const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
 
-          try{
-           // const fractionData = await uploadToIPFS(tokenData);
-            const tx = await nftContract.putForSale(tokenData.tokenAddress,tokenId,tokenData.tokenPrice);
-            await tx.wait();
-            setBuyAmount(price);
-            
-            const tokenObject =  JSON.parse(localStorage.getItem('tokenData')) || []
-            tokenObject.push({tokenID : tokenId,tokenShares : tokenData.tokenShares, tokenPrice : tokenData.tokenPrice});
-            localStorage.setItem('tokenData',JSON.stringify(tokenObject)); 
-            console.log("Successfully put for sale")
-          }catch(error){
-            console.log("Nft put for sale Error",error);
-            alert("Error in Put for sale",error);
-          }
-    }
-   
-    // let existingEntries = JSON.parse(localStorage.getItem("nfts"));
-    // if(existingEntries == null) existingEntries = [];
-    // let tokenObject = [{tokenShares:tokenData.tokenShares, 
-    // tokenPrice:tokenData.tokenPrice,
-    // }];
-    
-    // const jsonified = JSON.stringify([...existingEntries,...tokenObject]);
-    // localStorage.setItem("nfts", jsonified);
-    //purchase ful nft function
-    const purchaseNft = async () => {
-        if (!window.ethereum) {
-            alert("MetaMask is not installed!");
-            return;
-          }
-      
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-      
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
-          const address =  await signer.getAddress();
-          
-          console.log('Connecting to contract at address:', fractionAddress);
-          const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+    const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
 
-          try{
-             const priceInWei = ethers.parseEther(price);
-            // setBuyAmount(priceInWei);
-             const tx = await nftContract.purchase(nftAddress,tokenId,{value :ethers.parseEther(buyAmount)});
-             await tx.wait();
-             console.log("Successfully purchased nft");
-          }catch(error){
-            console.log("Error purchasing Nft",error);
-            alert("Error purchasing nft",error);
-          }
+    try {
+      const nftData = await nftContract.nftCollections(nftAddress, tokenId);
+      if (nftData) {
+        return true; // NFT is valid
+      }
+    } catch (error) {
+      console.error('Invalid NFT address or tokenId:', error);
+      return false;
     }
 
-    return(
-        <div className='fraction'>
-         <div className='fraction_interact'>
-            <div className='interact'>
-            <h3>Initialize Nft Contract</h3>
-            <p>Allow your nfts to be fractionalized</p>
-            <input type='text'
-            placeholder='Nft Collection Address'
-            value={tokenData.tokenAddress}
-            onChange={(e) => setTokenData({...tokenData,tokenAddress:e.target.value})}/>
-            <input type='text' 
-            placeholder='Token Id'
-            
-             onChange={(e)=>setTokenId(e.target.value)}/>
-             <input type='text'
-             placeholder='Amount'
-             value={tokenData.tokenShares}
-             onChange={(e)=>setTokenData({...tokenData, tokenShares : e.target.value})}/>
-             <button onClick={initializeNft}>Initialize</button>
-            </div>
-            <div className='putForSale'>
-                <h3>Put Nft For Sale</h3>
-                <input type='text'
-                placeholder='Nft Address'
-                value={tokenData.tokenAddress}
-                onChange={(e)=>setTokenData({...tokenData, tokenAddress :e.target.value})}/>
-                <input type='text'
-                placeholder='Token Id'
-                onChange={(e) => setTokenId(e.target.value)}/>
-                <input type='text'
-                placeholder='Price'
-                value={tokenData.tokenPrice}
-                onChange={(e) => setTokenData({...tokenData, tokenPrice : e.target.value})}/>
-                <button onClick={putNftForSale}>Put For Sale</button>
-            </div>
-            <div className='purchaseFull'>
-              <h3>Purchase A Full Nft</h3>
-              <p>Buy a complete nft, all the shares at once</p>
-              <input type='text'
-              placeholder='Nft Address'
-              onChange={(e)=>setNftAddress(e.target.value)}/>
-              <input type='text'
-              placeholder='Token Id'
-              onChange={(e) => setTokenId(e.target.value)}/>
-              <input type='text'
-              placeholder='Price'
-              value={buyAmount}/>
-              <button onClick={purchaseNft}>Buy</button>
-            </div>
-         </div>
+    return false;
+
+  }
+
+  // Initialize NFT collection (fractionalize the NFT)
+  const initializeNft = async () => {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed!');
+      return;
+    }
+
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+
+    try {
+      const tx = await nftContract.initialize(nftAddress, tokenId, shares);
+      await tx.wait();
+      alert('NFT contract initialized successfully.');
+    } catch (error) {
+      console.error('Error initializing contract:', error);
+      alert('Error initializing contract.');
+    }
+  };
+
+  // Put NFT for sale
+  const putNftForSale = async () => {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed!');
+      return;
+    }
+
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+
+    try {
+      const tx = await nftContract.putForSale(nftAddress, tokenId, ethers.parseEther(price));
+      await tx.wait();
+      alert('NFT is now for sale.');
+
+      // After successful transaction, upload data to Pinata
+      const nftData = {
+        nftAddress: nftAddress,
+        tokenId: tokenId,
+        salePrice: price,
+        timestamp: new Date().toISOString(),
+      };
+
+      // Upload the NFT data to Pinata
+      await uploadToIPFS(nftData);
+    } catch (error) {
+      console.error('Error putting NFT for sale:', error);
+      alert('Error putting NFT for sale.');
+    }
+  };
+
+  // Purchase full NFT (accepting nftAddress and tokenId)
+  const purchaseNft = async () => {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed!');
+      return;
+    }
+
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+
+    try {
+      const tx = await nftContract.purchase(nftAddress, tokenId, { value: ethers.parseEther(buyAmount) });
+      await tx.wait();
+      alert('NFT purchased successfully.');
+    } catch (error) {
+      console.error('Error purchasing NFT:', error);
+      alert('Error purchasing NFT.');
+    }
+  };
+
+  // Purchase shares of the NFT (accepting nftAddress and tokenId)
+  const purchaseShares = async () => {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed!');
+      return;
+    }
+
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+
+    try {
+      const sharePrice = (price * buyAmount) / shares;
+      const tx = await nftContract.purchaseShare(nftAddress, tokenId, buyAmount, { value: ethers.parseEther(sharePrice) });
+      await tx.wait();
+      alert('NFT shares purchased successfully.');
+    } catch (error) {
+      console.error('Error purchasing NFT shares:', error);
+      alert('Error purchasing NFT shares.');
+    }
+  };
+
+  // Redeem the NFT
+  const redeemNft = async () => {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed!');
+      return;
+    }
+
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+
+    try {
+      const tx = await nftContract.redeem(nftAddress, tokenId, buyAmount);
+      await tx.wait();
+      alert('NFT redeemed successfully.');
+    } catch (error) {
+      console.error('Error redeeming NFT:', error);
+      alert('Error redeeming NFT.');
+    }
+  };
+
+  // Display NFT sale price
+  const displayNftSalePrice = async () => {
+    if (!window.ethereum) {
+      alert('MetaMask is not installed!');
+      return;
+    }
+
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const nftContract = new ethers.Contract(fractionAddress, nftArtifact.abi, signer);
+
+    try {
+      const tx = await nftContract.nftCollections(nftAddress, tokenId);
+      setPrice(ethers.formatEther(tx.salePrice));
+      alert(`NFT Sale Price: ${price} ETH`);
+    } catch (error) {
+      console.error('Error displaying NFT sale price:', error);
+      alert('Error displaying NFT sale price.');
+    }
+  };
+
+  return (
+    <div className="fraction">
+      <div className="fraction_interact">
+        <div className="interact">
+          <h3>Initialize NFT Contract</h3>
+          <p>Fractionalize your NFT</p>
+          <input type="text" placeholder="NFT Collection Address" onChange={(e) => setNftAddress( e.target.value )} />
+          <input type="text" placeholder="Token Id" onChange={(e) => setTokenId(e.target.value)} />
+          <input type="text" placeholder="Shares Amount" onChange={(e) => setShares(e.target.value)} />
+          <button onClick={initializeNft}>Initialize</button>
         </div>
-    )
-}
+
+        <div className="putForSale">
+          <h3>Put NFT For Sale</h3>
+          <input type="text" placeholder="NFT Address" onChange={(e) => setNftAddress(e.target.value)} />
+          <input type="text" placeholder="Token Id" onChange={(e) => setTokenId(e.target.value)} />
+          <input type="text" placeholder="Sale Price (ETH)" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <button onClick={putNftForSale}>Put For Sale</button>
+        </div>
+
+        <div className="purchase">
+          <h3>Purchase Full NFT</h3>
+          <input type="text" placeholder="NFT Address" onChange={(e) => setNftAddress(e.target.value)} />
+          <input type="text" placeholder="Token Id" onChange={(e) => setTokenId(e.target.value)} />
+          <input type="text" placeholder="Buy Amount (ETH)" onChange={(e) => setBuyAmount(e.target.value)} />
+          <button onClick={purchaseNft}>Purchase NFT</button>
+        </div>
+
+        <div className="purchaseShares">
+          <h3>Purchase NFT Shares</h3>
+          <input type="text" placeholder="NFT Address" onChange={(e) => setNftAddress(e.target.value)} />
+          <input type="text" placeholder="Token Id" onChange={(e) => setTokenId(e.target.value)} />
+          <input type="text" placeholder="Shares Amount" onChange={(e) => setBuyAmount(e.target.value)} />
+          <button onClick={purchaseShares}>Purchase Shares</button>
+        </div>
+
+        <div className="redeemNft">
+          <h3>Redeem NFT</h3>
+          <input type="text" placeholder="NFT Address" onChange={(e) => setNftAddress(e.target.value)} />
+          <input type="text" placeholder="Token Id" onChange={(e) => setTokenId(e.target.value)} />
+          <button onClick={redeemNft}>Redeem NFT</button>
+        </div>
+
+        <div>
+          <h3>Display NFT Sale Price</h3>
+          <input type="text" placeholder="NFT Address" onChange={(e) => setNftAddress(e.target.value)} />
+          <input type="text" placeholder="Token Id" onChange={(e) => setTokenId(e.target.value)} />
+          <button onClick={displayNftSalePrice}>Display Sale Price</button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default FractionalInteract;

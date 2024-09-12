@@ -8,20 +8,33 @@ import DeployFractionalNft from './components/DeployFractionalNFT';
 import FractionalInteract from './components/interactFractionalContract';
 import NftStats from './components/NftPage';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 function Home() {
     const [contractAddress, setContractAddress] = useState('');
     const [fractionAddress, setFractionAddress] = useState('');
     const [wallet, setWallet] = useState('');
- 
-    useEffect(() => {
-      const savedContractAddress = localStorage.getItem('nftContractAddress');
-      if (savedContractAddress) {
-        setContractAddress(savedContractAddress);
-      }
-      const savedFractionAddress = localStorage.getItem('fractionContract');
-      if(savedFractionAddress){
-        setFractionAddress(savedFractionAddress);
+   
+    //load saved Data
+    useEffect( async ()=> {
+      const savedContractAddress = localStorage.getItem('IpfsHash');
+      const savedFractionAddress = localStorage.getItem('FractionIpfsHash');
+      if(!savedContractAddress || !savedFractionAddress) return;
+
+      const nftUrl = `https://gateway.pinata.cloud/ipfs/${savedContractAddress}`;
+      const fractionUrl = `https://gateway.pinata.cloud/ipfs/${savedFractionAddress}`
+
+      try{
+        const nftResponse = await axios.get(nftUrl);
+        const nftData = nftResponse.data;
+
+        const fractionResponse = await axios.get(fractionUrl);
+        const fractionData = fractionResponse.data;
+
+        setContractAddress(nftData.contractAddress)
+        setFractionAddress(fractionData.contractAddress);
+      }catch(error){
+        console.log('Error loading data',error);
       }
     }, []);
 
